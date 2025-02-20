@@ -1,0 +1,17 @@
+apiVersion: v2
+name: microservice
+description: A Helm chart for Kubernetes
+
+type: application
+
+# This is the chart version. This version number should be incremented each time you make changes
+# to the chart and its templates, including the app version.
+# Versions are expected to follow Semantic Versioning (https://semver.org/)
+version: 0.1.0
+
+appVersion: '0.0.1'
+
+dependencies:
+  - name: generic-microservice-helm
+    version: 1.3.3
+    repository: 'oci://ghcr.io/energywebfoundation'

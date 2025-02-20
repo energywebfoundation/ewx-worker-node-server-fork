@@ -1,0 +1,39 @@
+# Dependency directories
+node_modules
+yarn-error.log
+
+# Nx cache and output
+dist
+tmp
+.cache
+
+# Version control
+.git
+.gitignore
+
+# IDE specific files and directories
+.idea
+*.code-workspace
+.vscode
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+*.md
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# Other common directories to ignore
+coverage/
+node-red
+.node-red

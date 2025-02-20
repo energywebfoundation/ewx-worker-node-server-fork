@@ -1,0 +1,80 @@
+name: Release EWX Worker Node
+
+on:
+  push:
+    branches: ['master']
+
+env:
+  IMAGE_NAME: ewx-worker-node-server
+
+jobs:
+  cancel-previous:
+    name: Cancel Previous Runs
+    runs-on: ewf-runner-docker
+    timeout-minutes: 3
+    steps:
+      - uses: styfle/cancel-workflow-action@0.9.0
+        with:
+          access_token: ${{ github.token }}
+
+  release-module:
+    name: Release ewx-worker-node-server
+    runs-on: ewf-runner-docker
+    needs: [cancel-previous]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Bump version and push tag
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          release_branches: master
+          custom_release_rules: major:major:Major Changes,minor:minor:Minor Changes,chore:patch:Chores
+
+      - name: Create a GitHub release
+        uses: ncipollo/release-action@v1
+        if: github.ref == 'refs/heads/master'
+        with:
+          tag: v${{ steps.tag_version.outputs.new_version }}
+          name: Release ${{ steps.tag_version.outputs.new_version }}
+          body: ${{ steps.tag_version.outputs.changelog }}
+
+    outputs:
+      new_version: ${{ steps.tag_version.outputs.new_version }}
+
+  docker-build-and-push:
+    name: Build and Push Docker Image
+    runs-on: ewf-runner-docker
+    timeout-minutes: 10
+    needs: [release-module]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: |
+            ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:latest
+            ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:${{ needs.release-module.outputs.new_version }}

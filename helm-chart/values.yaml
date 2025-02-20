@@ -1,0 +1,71 @@
+replicaCount: 1 # can not be more than 1
+
+nameOverride: 'ewx-workers-node-service'
+fullnameOverride: 'ewx-workers-node-service'
+
+# Pod disruption budget will be created only if replicaCount > 1
+pdb:
+  enabled: false
+  minAvailable: 1
+
+deploymentStrategy: RollingUpdate
+
+restartPolicy: Always
+
+terminationGracePeriodSeconds: 30
+
+readinessProbe:
+  enabled: true
+  httpGet:
+    path: /health/readiness
+    port: api
+    scheme: HTTP
+  initialDelaySeconds: 240
+
+livenessProbe:
+  enabled: true
+  httpGet:
+    path: /health/liveness
+    port: api
+    scheme: HTTP
+  initialDelaySeconds: 240
+
+container:
+  ports:
+    http: 8000
+    api: 3002
+
+image:
+  repository: ghcr.io/energywebfoundation/ewx-worker-node-server/ewx-worker-node-server
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: 'latest'
+  command: []
+  args: []
+  tty:
+    enabled: false
+
+env:
+  PALLET_RPC_URL: https://public-rpc.mainnet.energywebx.com
+  VOTING_RPC_URL: https://wns-rpc.mainnet.energywebx.com
+  VOTING_WORKER_SEED: <SEED>
+  IPFS_API_KEY: <infura_ipfs_APIKEY>
+  IPFS_SECRET_KEY: <infura_ipfs_APISECRET>
+  IPFS_URL: https://ipfs.infura.io:5001
+  IPFS_CONTEXT_PATH: /api/v0/cat?arg=
+
+service:
+  portName: ''
+  type: ClusterIP
+  ports:
+    - port: 80
+      name: http
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# -- Extra lables to be added to all resources
+extraLabels: {}

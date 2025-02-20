@@ -1,0 +1,5 @@
+# Default owner for the whole repository
+* @hejkerooo
+
+# Specific rule for files in the .github directory
+.github/* @vickenliu @KaamilW
