@@ -230,9 +230,9 @@ A: Yes, you can switch and move to new Worker any moment. If you dont want to ta
 
 ## Maintainers
 
-- [Christopher Szostak](mailto:christopher.szostak@energyweb.org)
-- [Vicken Liu](mailto:vicken.liu@energyweb.org)
-- [Kamil Witkowski](mailto:kamil.witkowski@energyweb.org)
+- [Christopher Szostak](https://github.com/hejkerooo)
+- [Vicken Liu](https://github.com/vickenliu)
+- [Kamil Witkowski](https://github.com/KaamilW)
 
 ---
 
