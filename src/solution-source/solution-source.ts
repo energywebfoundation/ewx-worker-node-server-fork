@@ -46,6 +46,14 @@ const getSolutionSmartFlow = async (rawWorklogic: string): Promise<any | null> =
       return null;
     }
   }
+
+  return await downloadSolution(
+    MAIN_CONFIG.IPFS_API_KEY,
+    MAIN_CONFIG.IPFS_SECRET_KEY,
+    MAIN_CONFIG.IPFS_URL,
+    MAIN_CONFIG.IPFS_CONTEXT_PATH,
+    rawWorklogic,
+  );
 };
 
 const validateMessage = (data: { label: string; nodes: string }, derivedLogger): boolean => {
