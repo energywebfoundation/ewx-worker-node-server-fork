@@ -1,7 +1,6 @@
 name: Build and Release to ECR
 
 on:
-  pull_request:
   workflow_dispatch:
     inputs:
       branch:
