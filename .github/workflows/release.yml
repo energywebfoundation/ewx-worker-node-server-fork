@@ -49,7 +49,7 @@ jobs:
   docker-build-and-push:
     name: Build and Push Docker Image
     runs-on: ewf-runner-docker
-    timeout-minutes: 10
+    timeout-minutes: 20
     needs: [release-module]
     steps:
       - name: Checkout
