@@ -36,7 +36,7 @@ container:
     api: 3002
 
 image:
-  repository: ghcr.io/energywebfoundation/ewx-worker-node-server/ewx-worker-node-server
+  repository: 204113678960.dkr.ecr.us-east-1.amazonaws.com/ewx-worker-node
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: 'latest'
@@ -49,10 +49,6 @@ env:
   PALLET_RPC_URL: https://public-rpc.mainnet.energywebx.com
   VOTING_RPC_URL: https://wns-rpc.mainnet.energywebx.com
   VOTING_WORKER_SEED: <SEED>
-  IPFS_API_KEY: <infura_ipfs_APIKEY>
-  IPFS_SECRET_KEY: <infura_ipfs_APISECRET>
-  IPFS_URL: https://ipfs.infura.io:5001
-  IPFS_CONTEXT_PATH: /api/v0/cat?arg=
 
 service:
   portName: ''
