@@ -36,7 +36,7 @@ container:
     api: 3002
 
 image:
-  repository: 204113678960.dkr.ecr.us-east-1.amazonaws.com/ewx-worker-node
+  repository: ghcr.io/energywebfoundation/ewx-worker-node-server/ewx-worker-node-server
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: 'latest'
