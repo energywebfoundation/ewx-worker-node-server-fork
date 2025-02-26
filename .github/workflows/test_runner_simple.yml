@@ -1,0 +1,25 @@
+name: Test EWF Runner
+
+on:
+  push:
+
+jobs:
+  test-runner:
+    name: Basic Runner Test
+    runs-on: ewf-runner-docker
+    timeout-minutes: 2
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Runner environment info
+        run: |
+          echo "Runner: ${{ runner.name }}"
+          echo "OS: $(uname -a)"
+          df -h
+
+      - name: Test Docker
+        run: docker run hello-world
+
+      - name: Test Node.js
+        run: node --version
