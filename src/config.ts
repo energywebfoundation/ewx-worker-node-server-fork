@@ -103,9 +103,14 @@ export const ENV_SCHEMA = z.object({
     .transform((value) => value === 'true')
     .default('true')
     .describe('Should print successful logs.'),
-  PALLET_AUTH_SERVER_LOGIN_URL: z.string().url().describe('Pallet Auth Server URL'),
+  PALLET_AUTH_SERVER_LOGIN_URL: z
+    .string()
+    .url()
+    .describe('Pallet Auth Server Url used for authentication to Workers Registry'),
   PALLET_AUTH_SERVER_DOMAIN: z.string().describe('Pallet Auth Server domain'),
-  WORKER_REGISTRY_URL: z.string().url('Workers Registry URL'),
+  WORKER_REGISTRY_URL: z
+    .string()
+    .url('Url of Workers Registry that stores information about Worker Location'),
 });
 
 export const MAIN_CONFIG: z.infer<typeof ENV_SCHEMA> = (process.env.__SKIP_PARSE_CONFIG === 'true'
