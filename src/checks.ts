@@ -89,7 +89,7 @@ const validateBaseUrls = async (baseUrl: string, logger): Promise<boolean> => {
     rpc_url: z.string().optional(),
     workers_registry_url: z.string().optional(),
     workers_nominator_url: z.string().optional(),
-    cas_normalizer_url: z.string().optional()
+    cas_normalizer_url: z.string().optional(),
   });
 
   const receivedConfig = await axios

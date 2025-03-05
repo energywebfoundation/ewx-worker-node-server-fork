@@ -33,5 +33,6 @@ _Object containing the following properties:_
 | `PALLET_AUTH_SERVER_LOGIN_URL` | Pallet Auth Server Url used for authentication to Workers Registry                                                                                                                                    | `string` (_url_)       | `'https://ewx-pallet-auth-pex-dev.energyweb.org/api/auth/login'` |
 | `PALLET_AUTH_SERVER_DOMAIN`    | Pallet Auth Server domain                                                                                                                                                                             | `string`               | `'default'`                                                      |
 | `WORKER_REGISTRY_URL`          |                                                                                                                                                                                                       | `string` (_url_)       | `'https://ewx-workers-registry-pex-dev.energyweb.org'`           |
+| `BASE_URLS`                    | Base URLs of EWX resources                                                                                                                                                                            | `string` (_url_)       | `'https://marketplace-cdn.energyweb.org/base_urls.json'`         |
 
 _(\*) Required._
