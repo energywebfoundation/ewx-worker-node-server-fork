@@ -113,6 +113,11 @@ export const ENV_SCHEMA = z.object({
     .string()
     .url('Url of Workers Registry that stores information about Worker Location')
     .default('https://ewx-workers-registry-pex-dev.energyweb.org'),
+  BASE_URLS: z
+    .string()
+    .url()
+    .default('https://marketplace-cdn.energyweb.org/base_urls.json')
+    .describe('Base URLs of EWX resources'),
 });
 
 export const MAIN_CONFIG: z.infer<typeof ENV_SCHEMA> = (process.env.__SKIP_PARSE_CONFIG === 'true'

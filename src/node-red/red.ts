@@ -21,6 +21,7 @@ type EWX_ENVS =
   | 'EWX_SOLUTION_GROUP_ID'
   | 'EWX_WORKLOGIC_ID'
   | 'EWX_RPC_URL'
+  | 'BASE_URL'
   | 'EWX_SQLITE_PATH'
   | 'EWX_WORKER_ADDRESS';
 
@@ -476,6 +477,11 @@ export const modifyFlowIds = (
     },
     {
       type: 'str',
+      name: 'BASE_URL',
+      value: MAIN_CONFIG.BASE_URLS,
+    },
+    {
+      type: 'str',
       name: 'EWX_RPC_URL',
       value: MAIN_CONFIG.PALLET_RPC_URL,
     },
@@ -501,6 +507,7 @@ export const modifyFlowIds = (
         EWX_SQLITE_PATH: sqlitePath,
         EWX_WORKER_ADDRESS: workerAddress,
         EWX_RPC_URL: MAIN_CONFIG.PALLET_RPC_URL,
+        BASE_URL: MAIN_CONFIG.BASE_URLS,
       },
     };
   });
@@ -515,6 +522,7 @@ export const modifyFlowIds = (
         EWX_SQLITE_PATH: sqlitePath,
         EWX_WORKER_ADDRESS: workerAddress,
         EWX_RPC_URL: MAIN_CONFIG.PALLET_RPC_URL,
+        BASE_URL: MAIN_CONFIG.BASE_URLS,
       },
     };
   });
