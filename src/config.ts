@@ -103,6 +103,21 @@ export const ENV_SCHEMA = z.object({
     .transform((value) => value === 'true')
     .default('true')
     .describe('Should print successful logs.'),
+  PALLET_AUTH_SERVER_LOGIN_URL: z
+    .string()
+    .url()
+    .default('https://ewx-pallet-auth-pex-dev.energyweb.org/api/auth/login')
+    .describe('Pallet Auth Server Url used for authentication to Workers Registry'),
+  PALLET_AUTH_SERVER_DOMAIN: z.string().default('default').describe('Pallet Auth Server domain'),
+  WORKER_REGISTRY_URL: z
+    .string()
+    .url('Url of Workers Registry that stores information about Worker Location')
+    .default('https://ewx-workers-registry-pex-dev.energyweb.org'),
+  BASE_URLS: z
+    .string()
+    .url()
+    .default('https://marketplace-cdn.energyweb.org/base_urls.json')
+    .describe('Base URLs of EWX resources'),
 });
 
 export const MAIN_CONFIG: z.infer<typeof ENV_SCHEMA> = (process.env.__SKIP_PARSE_CONFIG === 'true'
