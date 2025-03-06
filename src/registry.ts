@@ -105,8 +105,10 @@ const getWorkerRegistrationStatus = async (
   workerAddress: string,
   api: ApiPromise,
 ): Promise<WorkerRegistrationStatus> => {
+  const path = MAIN_CONFIG.WORKER_REGISTRY_URL + `/api/v1/workers/${workerAddress}`;
+
   return await axios
-    .get(MAIN_CONFIG.WORKER_REGISTRY_URL + `/api/v1/workers/${workerAddress}`, {
+    .get(path, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -121,7 +123,18 @@ const getWorkerRegistrationStatus = async (
       return WorkerRegistrationStatus.EXISTS;
     })
     .catch((e) => {
-      if (e.status === 404 && e.response.data.error.name === 'NotFoundException') {
+      if (e.status === 404 && e.response.data === '') {
+        logger.error(
+          {
+            path,
+          },
+          'invalid path',
+        );
+
+        return WorkerRegistrationStatus.ERROR;
+      }
+
+      if (e.status === 404 && e.response.data.error.name === 'WorkerNotFoundException') {
         return WorkerRegistrationStatus.NOT_EXISTS;
       }
 
