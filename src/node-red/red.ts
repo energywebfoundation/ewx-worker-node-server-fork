@@ -44,7 +44,13 @@ export const startRedServer = async (app: express.Express): Promise<void> => {
           levelComparison: 'DESC',
         });
 
-        return function (msg: { level: number; msg: string; z?: string }) {
+        return function (msg: {
+          level: number;
+          msg: string;
+          z?: string;
+          type?: string;
+          id?: string;
+        }) {
           const logLevel: string | undefined = REVERSED_NODE_RED_LOG_LEVELS[msg.level];
 
           const cached: string | undefined = getNodeRedSolutionNamespace(msg.z);
@@ -68,7 +74,10 @@ export const startRedServer = async (app: express.Express): Promise<void> => {
           }
 
           if (cached != null) {
-            logger[logLevel]({ solutionNamespace: cached }, msg.msg);
+            logger[logLevel](
+              { solutionNamespace: cached, flow: msg.z, type: msg.type, id: msg.id },
+              msg.msg,
+            );
           } else {
             logger[logLevel]({}, msg.msg);
           }
