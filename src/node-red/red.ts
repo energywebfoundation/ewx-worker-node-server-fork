@@ -154,7 +154,13 @@ export const runtimeStarted = async (maxAttempts: number = 10): Promise<boolean>
 
     // Hacky way of testing if runtime is started - if it returns null, it means runtime has not started
     // if it returns anything else, it means that it started
-    const flows = await RED.runtime.flows.getFlows({});
+    const flows = await RED.runtime.flows.getFlows({}).catch((e: Error) => {
+      if (e?.message === "Cannot read properties of undefined (reading 'log')") {
+        return null;
+      }
+
+      throw e;
+    });
 
     runtimeStarted = flows !== null;
 
