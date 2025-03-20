@@ -9,6 +9,7 @@ on:
       - 'package.json'
       - 'package-lock.json'
       - 'tsconfig.json'
+      - '.github/workflows/release.yml'
 
 env:
   IMAGE_NAME: ${{ secrets.EWX_WORKER_NODE_SERVER }}
