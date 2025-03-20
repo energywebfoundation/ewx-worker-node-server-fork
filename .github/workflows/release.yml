@@ -136,5 +136,4 @@ jobs:
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
-          output: trivy-results.md
           cache-dir: .trivycache/
