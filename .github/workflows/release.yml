@@ -19,7 +19,7 @@ jobs:
   cancel-previous:
     name: Cancel Previous Runs
     runs-on: ${{ vars.RUNNER_LABEL || 'ubuntu-latest' }}
-    timeout-minutes: 3
+    timeout-minutes: 2
     steps:
       - uses: styfle/cancel-workflow-action@0.9.0
         with:
