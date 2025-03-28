@@ -30,13 +30,25 @@ export const ENV_SCHEMA = z.object({
   EXCLUDED_NODES: z
     .string()
     .default('file,file in,watch,exec')
-    .transform((a) => a.split(','))
+    .transform((a: string) => {
+      if (a.length === 0) {
+        return [];
+      }
+
+      return a.split(',');
+    })
     .describe(
       'NodeRed nodes that are going to be excluded from SmartFlows. If any node type of the SmartFlow equals to one of the EXCLUDED_NODES it will prevent SmartFlow from being installed.',
     ),
   TARGET_SOLUTION_NAMESPACES: z
     .string()
-    .transform((a) => a.split(','))
+    .transform((a: string) => {
+      if (a.length === 0) {
+        return [];
+      }
+
+      return a.split(',');
+    })
     .optional()
     .describe(
       'If set it will only install solutions that namespaces are specified in this env. variable. Comma-separated.',
