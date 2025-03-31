@@ -103,7 +103,7 @@ export const ENV_SCHEMA = z.object({
     ),
   HEARTBEAT_PATH: z
     .string()
-    .default('heartbeat')
+    .default('heartbeat_monitor.txt')
     .describe('Path to the heartbeat file used for monitoring.'),
   HEARTBEAT_INTERVAL: z.coerce
     .number()
