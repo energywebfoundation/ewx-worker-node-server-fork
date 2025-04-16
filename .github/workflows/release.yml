@@ -2,7 +2,7 @@ name: Release EWX Worker Node
 
 on:
   push:
-    branches: ['master']
+    branches: ['master', 'release_enhancement']
     paths:
       - 'src/**'
       - 'Dockerfile'
@@ -130,7 +130,7 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:${{ needs.release-module.outputs.new_version }}
+          image-ref: ghcr.io/${{ github.repository }}/${{ github.repository }}:${{ needs.release-module.outputs.new_version }}
           format: 'table'
           exit-code: '0'
           ignore-unfixed: true
