@@ -36,6 +36,16 @@ jobs:
           release_branches: master
           custom_release_rules: major:major:Major Changes,minor:minor:Minor Changes,chore:patch:Chores
 
+      - name: Update build.json
+        run: |
+          echo "{\"timestamp\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\", \"gitSha\": \"${{ github.sha }}\", \"version\": \"${{ steps.tag_version.outputs.new_version }}\"}" > build.json
+          
+      - name: Commit build.json
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "chore: update build.json for version ${{ steps.tag_version.outputs.new_version }} [skip ci]"
+          file_pattern: build.json
+          
       - name: Create a GitHub release
         uses: ncipollo/release-action@v1
         if: github.ref == 'refs/heads/master'
