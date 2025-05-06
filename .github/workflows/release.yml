@@ -2,7 +2,7 @@ name: Release EWX Worker Node
 
 on:
   push:
-    branches: ['master']
+    branches: ['master', 'DOI-3551-node-server']
 
 env:
   IMAGE_NAME: ${{ secrets.EWX_WORKER_NODE_SERVER }}
@@ -55,6 +55,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -96,3 +98,19 @@ jobs:
             ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:${{ needs.release-module.outputs.new_version }}
             ${{ steps.login-ecr.outputs.registry }}/${{ env.IMAGE_NAME }}:latest
             ${{ steps.login-ecr.outputs.registry }}/${{ env.IMAGE_NAME }}:${{ needs.release-module.outputs.new_version }}
+            
+      # Only run on the DOI-3551-node-server branch
+      - name: Update build.json if needed
+        if: github.ref == 'refs/heads/DOI-3551-node-server'
+        run: |
+          # Create updated build.json
+          echo "{\"timestamp\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\", \"gitSha\": \"${{ github.sha }}\", \"version\": \"${{ needs.release-module.outputs.new_version }}\"}" > build.json
+          
+          # Setup git config
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          # Commit and push changes if any
+          git add -f build.json
+          git commit -m "ci: update build.json [skip ci]" || echo "No changes to commit"
+          git push
