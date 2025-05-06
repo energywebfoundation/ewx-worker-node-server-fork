@@ -1,0 +1,33 @@
+name: DOI-3551 Build Test
+
+on:
+  push:
+    branches: ['DOI-3551-node-server']
+
+jobs:
+  test-build-json:
+    name: Test build.json generation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: Dockerfile
+          push: false
+          load: true
+          tags: worker-node-server:test
+          build-args: |
+            GIT_SHA=${{ github.sha }}
+            VERSION=test-version
+
+      - name: Verify build.json in Docker image
+        run: |
+          # Check if build.json exists in the Docker image
+          docker run --rm worker-node-server:test cat build.json
