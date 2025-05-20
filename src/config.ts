@@ -130,6 +130,7 @@ export const ENV_SCHEMA = z.object({
     .url()
     .default('https://marketplace-cdn.energyweb.org/base_urls.json')
     .describe('Base URLs of EWX resources'),
+  BUILD_METADATA_PATH: z.string().default('./build.json').describe('Path to build metadata file'),
 });
 
 export const MAIN_CONFIG: z.infer<typeof ENV_SCHEMA> = (process.env.__SKIP_PARSE_CONFIG === 'true'
