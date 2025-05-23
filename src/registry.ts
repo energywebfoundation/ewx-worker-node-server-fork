@@ -92,7 +92,6 @@ const storeWorkerInRegistry = async (token: string, account: KeyringPair): Promi
           Authorization: `Bearer ${token}`,
           'x-worker-version': AppVersion.version,
           'x-worker-source': 'WNS',
-          'x-forwarded-for': '89.64.60.93',
         },
       },
     )
