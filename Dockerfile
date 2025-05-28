@@ -25,7 +25,8 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./
 
 ARG GIT_SHA
-RUN echo "{\"timestamp\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\", \"gitSha\": \"$GIT_SHA\"}" > build.json
+ARG VERSION
+RUN echo "{\"timestamp\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\", \"gitSha\": \"$GIT_SHA\", \"version\": \"$VERSION\"}" > build.json
 
 USER node
 
