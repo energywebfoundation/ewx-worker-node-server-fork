@@ -28,6 +28,7 @@ ARG GIT_SHA
 ARG VERSION
 RUN echo "{\"timestamp\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\", \"gitSha\": \"$GIT_SHA\", \"version\": \"$VERSION\"}" > build.json
 
+RUN chown -R node:node /app
 USER node
 
 CMD ["node", "--enable-source-maps", "main.js"]
