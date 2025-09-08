@@ -27,6 +27,20 @@ dotenv.config({
 });
 
 export const ENV_SCHEMA = z.object({
+  ENABLE_PROMETHEUS: z.coerce.boolean().default(true).describe('Should enable Prometheus metrics.'),
+  PROMETHEUS_DEFAULT_METRICS_PREFIX: z
+    .string()
+    .default('ewx_worker_node')
+    .describe('Prefix for Prometheus metrics.'),
+  MAX_DEBUG_LOG_MESSAGE_LENGTH: z.coerce
+    .number()
+    .default(4096)
+    .describe('Max length of debug log message.'),
+  PROMETHEUS_ENABLE_DEFAULT_METRICS: z.coerce
+    .boolean()
+    .default(false)
+    .describe('Enable default metrics.'),
+  PROMETHEUS_METRICS_PATH: z.string().default('/metrics').describe('Path to Prometheus metrics.'),
   EXCLUDED_NODES: z
     .string()
     .default('file,file in,watch,exec')

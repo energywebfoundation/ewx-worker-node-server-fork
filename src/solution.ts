@@ -26,27 +26,28 @@ import {
   type SolutionGroupId,
 } from './polkadot/polka';
 import { type SolutionGroup } from './polkadot/polka-types';
+import { PrometheusClient } from './metrics/prometheus';
 
 const logger = createLogger('SolutionLoop');
 
 export const pushToQueue = async (account: KeyringPair): Promise<void> => {
   // eslint-disable-next-line no-constant-condition
-  const api: ApiPromise = await retryHttpAsyncCall(async () => await createReadPalletApi());
-
-  const timeout: number = MAIN_CONFIG.SOLUTION_QUEUE_PROCESS_DELAY;
-
-  // eslint-disable-next-line no-constant-condition
   while (true) {
+    const api: ApiPromise = await retryHttpAsyncCall(async () => await createReadPalletApi());
+
+    const timeout: number = MAIN_CONFIG.SOLUTION_QUEUE_PROCESS_DELAY;
+
     await processSolutionQueue(api, account).catch(async (e) => {
       logger.error('failed to complete queue loop');
       logger.error(e);
 
+      await api.disconnect();
       await sleep(50000);
       await pushToQueue(account);
-      await api.disconnect();
     });
 
-    await api.disconnect();
+    PrometheusClient.disconnectReadApi.inc();
+
     await sleep(timeout);
   }
 };
@@ -73,6 +74,9 @@ async function processSolutionQueue(api: ApiPromise, workerAccount: KeyringPair)
   if (operatorAddress == null) {
     logger.info({ workerAddress: workerAccount.address }, 'no operator assigned to worker');
 
+    await api.disconnect();
+    PrometheusClient.disconnectReadApi.inc();
+
     await sleep(5000);
 
     return;
@@ -81,6 +85,9 @@ async function processSolutionQueue(api: ApiPromise, workerAccount: KeyringPair)
   const operatorSubscriptions: string[] = await getOperatorSubscriptions(api, operatorAddress);
 
   if (operatorSubscriptions.length === 0) {
+    await api.disconnect();
+    PrometheusClient.disconnectReadApi.inc();
+
     await sleep(5000);
 
     return;
@@ -100,7 +107,7 @@ async function processSolutionQueue(api: ApiPromise, workerAccount: KeyringPair)
     operatorSubscriptions,
   );
 
-  const unfilteredSolutions: SolutionArray = await getSolutions(api);
+  const unfilteredSolutions: SolutionArray = await getSolutions(api, operatorSubscriptions);
 
   const solutions: SolutionArray = unfilteredSolutions.filter((solution) =>
     operatorSubscriptions.includes(solution[1]),
@@ -139,21 +146,31 @@ async function processSolutionQueue(api: ApiPromise, workerAccount: KeyringPair)
   if (activeTargetSolutions.length === 0) {
     logger.info({ operatorSubscriptions, operatorAddress }, 'did not found any active solutions');
 
+    await api.disconnect();
+    PrometheusClient.disconnectReadApi.inc();
+
     await sleep(5000);
 
     return;
   }
 
+  const solutionGroupStatus: Record<string, boolean> = {};
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  for (const [_, solutionGroup] of Object.entries(solutionGroups)) {
+    solutionGroupStatus[solutionGroup.namespace] = await hasValidGroupConfiguration(
+      api,
+      operatorAddress,
+      solutionGroup,
+    );
+  }
+
   for (const solution of activeTargetSolutions) {
     const workLogic: string = solution[2].workload.workLogic;
 
-    const isSuccesful: boolean = await hasValidGroupConfiguration(
-      api,
-      operatorAddress,
-      solutionGroups[solution[1]],
-    );
+    const fulfillsGroupCriteria = solutionGroupStatus[solution[1]] ?? false;
 
-    if (!isSuccesful) {
+    if (!fulfillsGroupCriteria) {
       logger.warn(
         {
           solutionId: solution[0],
@@ -172,15 +189,24 @@ async function processSolutionQueue(api: ApiPromise, workerAccount: KeyringPair)
       workLogic,
       MAIN_CONFIG.EXCLUDED_NODES,
       workerAccount.address,
-    ).catch((e) => {
-      logger.error(
-        { solutionId: solution[0], solutionGroupId: solution[1] },
-        `failed to upsert solution to node red`,
-      );
+    )
+      .then(() => {
+        PrometheusClient.solutionInstallsSum.inc();
+      })
+      .catch((e) => {
+        logger.error(
+          { solutionId: solution[0], solutionGroupId: solution[1] },
+          `failed to upsert solution to node red`,
+        );
 
-      logger.error(e);
-    });
+        logger.error(e);
+
+        PrometheusClient.solutionFailedInstallsSum.inc();
+      });
   }
+
+  await api.disconnect();
+  PrometheusClient.disconnectReadApi.inc();
 
   const refreshedTabNodes: RedNodes = await getTabNodes();
 

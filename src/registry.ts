@@ -7,6 +7,7 @@ import { u8aToHex } from '@polkadot/util';
 import { createToken } from './auth/login';
 import { type ApiPromise } from '@polkadot/api';
 import { AppVersion } from './version';
+import { PrometheusClient } from './metrics/prometheus';
 
 const logger = createLogger('WorkersRegistry');
 
@@ -61,6 +62,8 @@ export const registerWorker = async (account: KeyringPair): Promise<void> => {
         return retry(e);
       } finally {
         await api.disconnect();
+
+        PrometheusClient.disconnectReadApi.inc();
       }
     },
     {

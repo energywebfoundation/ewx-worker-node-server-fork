@@ -14,6 +14,8 @@ import { createConfigRouter } from './worker-config';
 import { retryHttpAsyncCall } from './polkadot/polka';
 import { startHeartbeat } from './heartbeat';
 import { registerWorker } from './registry';
+import { PrometheusClient, setupPrometheus, storeInstalledSolutions } from './metrics/prometheus';
+import { AppVersion } from './version';
 
 void (async () => {
   setAppState(APP_BOOTSTRAP_STATUS.STARTED);
@@ -24,6 +26,8 @@ void (async () => {
 
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: false }));
+
+  await setupPrometheus(app);
 
   const healthRouter: express.Router | null = createHealthRouter();
 
@@ -50,6 +54,7 @@ void (async () => {
   logger.info(
     {
       address: account.address,
+      appVersion: AppVersion,
     },
     'loaded account',
   );
@@ -74,10 +79,14 @@ void (async () => {
 
   await api.disconnect();
 
+  PrometheusClient.disconnectReadApi.inc();
+
   void pushToQueue(account);
 
   setAppState(APP_BOOTSTRAP_STATUS.READY);
 
   logger.info('starting heartbeat');
+
   startHeartbeat();
+  storeInstalledSolutions();
 })();

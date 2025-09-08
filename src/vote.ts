@@ -8,6 +8,7 @@ import * as fastq from 'fastq';
 import { createLogger, createWritePalletApi, sleep } from './util';
 import { MAIN_CONFIG } from './config';
 import { submitSolutionResult } from './polkadot/polka';
+import { PrometheusClient } from './metrics/prometheus';
 
 interface VoteTask {
   votingRoundId: string;
@@ -47,7 +48,9 @@ setInterval(() => {
       voteStorage.delete(key);
     }
   });
-}, 20000);
+
+  PrometheusClient.pendingVotesGauge.set(queue.length());
+}, 5000);
 
 export const createVoteRouter = (): express.Router => {
   const voteRouter = express.Router({ mergeParams: true });
@@ -164,6 +167,10 @@ async function processVoteQueue(task: VoteTask): Promise<void> {
 
   tempLogger.info('attempting to send vote');
 
+  PrometheusClient.totalVotesAttempts.inc({
+    solutionNamespace: task.solutionNamespace,
+  });
+
   await submitSolutionResult(
     api,
     account,
@@ -178,6 +185,10 @@ async function processVoteQueue(task: VoteTask): Promise<void> {
           transactionHash: hash,
         });
       }
+
+      PrometheusClient.totalVotesSum.inc({
+        solutionNamespace: task.solutionNamespace,
+      });
 
       tempLogger.info(
         {
@@ -198,10 +209,18 @@ async function processVoteQueue(task: VoteTask): Promise<void> {
       tempLogger.error(e);
       tempLogger.flush();
 
+      PrometheusClient.totalFailedVotesSum.inc({
+        solutionNamespace: task.solutionNamespace,
+      });
+
       await api.disconnect();
+
+      PrometheusClient.disconnectWriteApi.inc();
 
       throw e;
     });
 
   await api.disconnect();
+
+  PrometheusClient.disconnectWriteApi.inc(1);
 }

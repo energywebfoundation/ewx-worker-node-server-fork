@@ -8,6 +8,7 @@ import { stringToU8a, u8aConcat, u8aToHex } from '@polkadot/util';
 import promiseRetry from 'promise-retry';
 import { type WrapOptions } from 'retry';
 import { sleep } from '../util';
+import { PrometheusClient } from '../metrics/prometheus';
 
 export type WorkerAddress = string;
 export type OperatorAddress = string;
@@ -33,6 +34,7 @@ export const createApi = async (palletEndpoint: string): Promise<ApiPromise> => 
     types: { QueryResult: Tuple.with([u32, u128, u128]) },
     noInitWarn: true,
     throwOnConnect: true,
+    throwOnUnknown: true,
   });
 
   await api.isReady;
@@ -75,6 +77,10 @@ export const retryHttpAsyncCall = async <T>(
 export const getCurrentBlock = async (api: ApiPromise): Promise<number | null> => {
   const signedBlock = await api.rpc.chain.getBlock().catch(() => undefined);
 
+  PrometheusClient.rpcCallsTotal.inc({
+    method: 'getBlock',
+  });
+
   if (signedBlock != null) {
     return signedBlock.block.header.number.toNumber();
   }
@@ -88,6 +94,10 @@ export const getSolutionGroupsByIds = async (
 ): Promise<Record<SolutionGroupId, SolutionGroup>> => {
   const solutionGroups =
     await api.query.workerNodePallet.solutionsGroups.multi(requestedSolutionGroups);
+
+  PrometheusClient.rpcCallsTotal.inc({
+    method: 'solutionsGroups',
+  });
 
   return solutionGroups.reduce((acc, curr) => {
     const primitive: SolutionGroup | undefined | null =
@@ -103,8 +113,35 @@ export const getSolutionGroupsByIds = async (
   }, {});
 };
 
-export const getSolutions = async (api: ApiPromise): Promise<SolutionArray> => {
+export const getSolutions = async (
+  api: ApiPromise,
+  operatorSubscriptions: string[],
+): Promise<SolutionArray> => {
   const solutions = await api.query.workerNodePallet.solutions.entries();
+
+  PrometheusClient.rpcCallsTotal.inc({
+    method: 'solutions',
+  });
+
+  const solutionsWithGroups: Record<string, string> =
+    await api.query.workerNodePallet.groupOfSolution.entries().then((x) => {
+      return x
+        .map(([solutionNamespace, groupOfSolution]) => {
+          return {
+            solutionNamespace: (solutionNamespace.toHuman() as unknown as SolutionId)[0],
+            groupOfSolution: groupOfSolution.toHuman() as unknown as SolutionGroupId,
+          };
+        })
+        .reduce((acc, curr) => {
+          acc[curr.solutionNamespace] = curr.groupOfSolution;
+
+          return acc;
+        }, {});
+    });
+
+  PrometheusClient.rpcCallsTotal.inc({
+    method: 'groupOfSolution',
+  });
 
   const results: SolutionArray = await Promise.all(
     solutions.map(async ([namespaceHash, solution]) => {
@@ -112,12 +149,12 @@ export const getSolutions = async (api: ApiPromise): Promise<SolutionArray> => {
 
       const solutionPrimitive = solution.toPrimitive() as unknown as Solution;
 
-      const groupOfSolution = await api.query.workerNodePallet.groupOfSolution(solutionId);
-
-      const solutionGroupId: string | null =
-        groupOfSolution.toPrimitive() as unknown as SolutionGroupId;
-
-      return [solutionId, solutionGroupId, solutionPrimitive, solutionPrimitive.status];
+      return [
+        solutionId,
+        solutionsWithGroups[solutionId] ?? null,
+        solutionPrimitive,
+        solutionPrimitive.status,
+      ];
     }),
   );
 
@@ -132,6 +169,10 @@ export const isConnectedAsWorker = async (
 
   const result = await api.query.workerNodePallet.workerNodeToOperator(encodedAccount);
 
+  PrometheusClient.rpcCallsTotal.inc({
+    method: 'workerNodeToOperator',
+  });
+
   const humanizedResult: string | null = result.toHuman() as string | null;
 
   return [humanizedResult != null, humanizedResult];
@@ -142,6 +183,10 @@ export const getOperatorAddress = async (
   workerAddress: WorkerAddress,
 ): Promise<string | null> => {
   const operatorAddress = await api.query.workerNodePallet.workerNodeToOperator(workerAddress);
+
+  PrometheusClient.rpcCallsTotal.inc({
+    method: 'workerNodeToOperator',
+  });
 
   return operatorAddress.toString();
 };
@@ -157,6 +202,10 @@ export const getOperatorSubscriptions = async (
   const operatorSubscriptions = await api.query.workerNodePallet.operatorSubscriptions.entries(
     encodedAccount.toU8a(true),
   );
+
+  PrometheusClient.rpcCallsTotal.inc({
+    method: 'operatorSubscriptions',
+  });
 
   return operatorSubscriptions
     .map(([c, _]) => c.toHuman() as unknown as [string, string])
@@ -182,6 +231,10 @@ export const submitSolutionResult = async (
     account.publicKey,
   );
 
+  PrometheusClient.rpcCallsTotal.inc({
+    method: 'submitSolutionResult',
+  });
+
   const transactionHash: string | null = await new Promise(
     // eslint-disable-next-line no-async-promise-executor,@typescript-eslint/no-misused-promises
     async (resolve, reject) => {
@@ -197,6 +250,10 @@ export const submitSolutionResult = async (
             }
 
             const signedBlock = await api.rpc.chain.getBlock().catch(() => undefined);
+
+            PrometheusClient.rpcCallsTotal.inc({
+              method: 'getBlockForVote',
+            });
 
             if (signedBlock == null) {
               continue;
@@ -214,6 +271,7 @@ export const submitSolutionResult = async (
                 }
               }),
             );
+
             await sleep(loopTimeMiliseconds);
 
             counter = counter + 1;
@@ -240,6 +298,10 @@ export const queryStake = async (
   const data = u8aToHex(encodedData);
 
   const encodedStake = await api.rpc.state.call('WorkerSolutionApi_query_stake', data);
+
+  PrometheusClient.rpcCallsTotal.inc({
+    method: 'queryStake',
+  });
 
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-expect-error
