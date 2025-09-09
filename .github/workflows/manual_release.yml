@@ -14,16 +14,22 @@ env:
 
 jobs:
   build-and-push:
-    runs-on: ewf-runner-docker
+    runs-on: ${{ vars.RUNNER_LABEL || 'ubuntu-latest' }}
     timeout-minutes: 5
     steps:
       - name: Set branch
         id: set_branch
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "BRANCH=${{ github.event.inputs.branch }}" >> $GITHUB_OUTPUT
+            BRANCH="${{ github.event.inputs.branch }}"
+            TAG_BRANCH=$(echo "$BRANCH" | sed 's/\//-/g')
+            echo "BRANCH=$BRANCH" >> $GITHUB_OUTPUT
+            echo "TAG_BRANCH=$TAG_BRANCH" >> $GITHUB_OUTPUT
           else
-            echo "BRANCH=${{ github.head_ref }}" >> $GITHUB_OUTPUT
+            BRANCH="${{ github.head_ref }}"
+            TAG_BRANCH=$(echo "$BRANCH" | sed 's/\//-/g')
+            echo "BRANCH=$BRANCH" >> $GITHUB_OUTPUT
+            echo "TAG_BRANCH=$TAG_BRANCH" >> $GITHUB_OUTPUT
           fi
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,6 +38,8 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
           mask-aws-account-id: true
       - name: Log in to ECR
@@ -48,4 +56,4 @@ jobs:
           file: Dockerfile
           # platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ steps.login-ecr.outputs.registry }}/${{ env.IMAGE_NAME }}:${{ steps.set_branch.outputs.BRANCH }}
+          tags: ${{ steps.login-ecr.outputs.registry }}/${{ env.IMAGE_NAME }}:${{ steps.set_branch.outputs.TAG_BRANCH }}
