@@ -1,6 +1,7 @@
 import axios, { type AxiosInstance } from 'axios';
 import { createLogger } from '../util';
 import { MAIN_CONFIG } from '../config';
+import { PrometheusClient } from '../metrics/prometheus';
 
 const ipfsLogger = createLogger('IPFS');
 
@@ -33,6 +34,8 @@ export const downloadSolution = async (
       },
     });
 
+    PrometheusClient.ipfsInstallSum.inc(1);
+
     const flowSource = `${ipfsUrl}${ipfsContextPath}${solutionWorklogic}`;
 
     const response = await axiosInstance.post(flowSource);
@@ -58,6 +61,8 @@ export const downloadSolution = async (
   const flowSource = `${ipfsUrl}${ipfsContextPath}${solutionWorklogic}`;
 
   const response = await axiosInstance.get(flowSource);
+
+  PrometheusClient.ipfsInstallSum.inc(1);
 
   return response.data;
 };

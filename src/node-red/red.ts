@@ -63,23 +63,24 @@ export const startRedServer = async (app: express.Express): Promise<void> => {
           }
 
           if (MAIN_CONFIG.PRETTY_PRINT) {
-            logger.info(
-              {
-                logLevel,
-              },
-              msg.msg,
-            );
+            logger.info({
+              logLevel,
+              msg: msg.msg,
+            });
 
             return;
           }
 
           if (cached != null) {
-            logger[logLevel](
-              { solutionNamespace: cached, flow: msg.z, type: msg.type, id: msg.id },
-              msg.msg,
-            );
+            logger[logLevel]({
+              solutionNamespace: cached,
+              flow: msg.z,
+              type: msg.type,
+              id: msg.id,
+              msg: msg.msg,
+            });
           } else {
-            logger[logLevel]({}, msg.msg);
+            logger[logLevel]({ msg: msg.msg });
           }
         };
       },
@@ -113,6 +114,55 @@ export const startRedServer = async (app: express.Express): Promise<void> => {
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   RED.init(server, settings);
+
+  RED.events.on('flows:started', (vv) => {
+    if (vv.flows == null) {
+      return;
+    }
+
+    const matchingTabNodes = vv.flows
+      .filter((flow) => flow.type === 'tab')
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      .map((x: any) => getNodeEnv(x, 'EWX_SOLUTION_ID', false));
+
+    redLogger.info({ matchingTabNodes }, 'flows started');
+  });
+
+  RED.events.on('flows:stopped', (vv) => {
+    if (vv.flows == null) {
+      return;
+    }
+
+    const matchingTabNodes = vv.flows
+      .filter((flow) => flow.type === 'tab')
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      .map((x: any) => getNodeEnv(x, 'EWX_SOLUTION_ID', false));
+
+    redLogger.info({ matchingTabNodes }, 'flows stopped');
+  });
+
+  RED.events.on('comms', (vv) => {
+    if (vv.topic !== 'debug') {
+      return;
+    }
+
+    if (vv?.data?.z == null || vv?.data?.name == null) {
+      return;
+    }
+
+    const solutionNamespace: string | undefined = getNodeRedSolutionNamespace(vv.data.z as string);
+    const msg = vv?.data?.msg ?? null;
+
+    redLogger.info({
+      solutionNamespace,
+      name: vv.data.name,
+      property: vv.data.property,
+      msg:
+        msg != null && typeof msg === 'string'
+          ? msg.slice(0, MAIN_CONFIG.MAX_DEBUG_LOG_MESSAGE_LENGTH)
+          : null,
+    });
+  });
 
   await RED.start();
 
@@ -264,6 +314,7 @@ export const upsertSolution = async (
 
   derivedLogger.info('solution installed');
 };
+
 export const getInstalledSolution = async (
   solutionId: SolutionId,
 ): Promise<RedNode | undefined> => {
